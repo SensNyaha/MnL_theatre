@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <button>0000001</button>
+    <button>0000022</button>
+</body>
+<script>
+    const btn = document.querySelectorAll("button");
+
+    btn.forEach((b) => b.addEventListener("click", (e) => {
+        fetch("http://127.0.0.1:3000/tt/id/tt"+e.target.innerText + "?short=true")
+                .then(res => res.json())
+                .then(res => console.log(res))
+    }))
+</script>
+</html>
