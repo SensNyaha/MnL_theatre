@@ -5,8 +5,7 @@ const movieDateRoomSchema = new mongoose.Schema({
     users: {
         user1: {
             username: {
-                type: String,
-                required: true
+                type: String
             },
             ratedFilms: {
                 likedFilms: Array,
