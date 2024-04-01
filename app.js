@@ -36,5 +36,4 @@ mongoose.connect("mongodb://127.0.0.1:27017/IMDB")
     .then(() => app.listen(3000, async () => {
         console.log("server started");
         let movieID = "14273";
-        // await fetchIMDB(movieID);
     }))

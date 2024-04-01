@@ -8,14 +8,13 @@ const Movie = require("../models/movie");
 const MovieDateRoom = require("../models/movieDateRoom");
 
 // GET запрос на создание комнаты свидания, в который в query.creator МОЖНО и НУЖНО передать имя автора, открывающего эту комнату
-router.get("/create", async (req, res) => {
-    console.log(req.query.creator);
-    const creator = req.query.creator || "default name";
+router.post("/create", async (req, res) => {
+    const host = req.body.host || "default name";
 
     const movieDateRoomObj = new MovieDateRoom({
         users: {
             user1: {
-                username: creator,
+                username: host,
                 ratedFilms: {
                     likedFilms: [],
                     dislikedFilms: [],
@@ -40,17 +39,22 @@ router.get("/create", async (req, res) => {
         shortId: shortId(this.uuid)
     });
 
+
     const addedMovieDateRoom = await movieDateRoomObj.save();
 
     res.json(addedMovieDateRoom);
 
     setTimeout(async () => {
         await MovieDateRoom.findOneAndDelete({uuid: movieDateRoomObj.uuid})
-    }, 30000)
+    }, 120_000)
 })
 
-// GET запрос на создание контента очереди из фильмов для текущей комнаты
-router.get("/getquery", async (req, res) => {
+// GET запрос на создание контента очереди из фильмов
+router.post("/fullfillquery", async (req, res) => {
+    const {uuid} = req.body;
+
+    if (!uuid) return res.status(400).json({status: 400, message: "No uuid was attached with request"})
+
     const genres = req.query.genres; //[&]genres=Short,Western[&]
     const years = req.query.years; //[&]years=1910-2020[&]
     const countries = req.query.countries; //[&]countries=GB,US[&]
@@ -96,6 +100,18 @@ router.get("/getquery", async (req, res) => {
     };
 
     const foundMovies = await Movie.find(filterObject);
-    res.json(foundMovies);
+
+    const foundMovieDate = await MovieDateRoom.findOneAndUpdate({uuid}, {moviesQuery: foundMovies});
+    if (!foundMovieDate) {
+        return res.json({status: 404, message: "No room found with the same uuid"});
+    }
+
+    res.json(foundMovieDate);
 })
+
+// POST запрос на присоединение к существущей комнате
+router.post("/join/:shortid", async (req, res) => {
+
+})
+
 module.exports = router;

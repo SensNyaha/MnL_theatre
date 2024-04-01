@@ -50,7 +50,7 @@ const movieDateRoomSchema = new mongoose.Schema({
         },
         matchedMovie: String
     },
-    createdFilmsQuery: Array
+    moviesQuery: Array
 })
 
 module.exports = mongoose.model("MovieDateRoom", movieDateRoomSchema, "movieDateRooms");
