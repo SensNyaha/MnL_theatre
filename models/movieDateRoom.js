@@ -25,7 +25,7 @@ const movieDateRoomSchema = new mongoose.Schema({
         }
     },
     filters: {
-        genre: Array,
+        genres: Array,
         years: {
             from: Number,
             to: Number
@@ -49,7 +49,8 @@ const movieDateRoomSchema = new mongoose.Schema({
             default: false
         },
         matchedMovie: String
-    }
+    },
+    createdFilmsQuery: Array
 })
 
 module.exports = mongoose.model("MovieDateRoom", movieDateRoomSchema, "movieDateRooms");
