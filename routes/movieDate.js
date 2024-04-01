@@ -7,7 +7,23 @@ const shortId = require("shortid");
 const Movie = require("../models/movie");
 const MovieDateRoom = require("../models/movieDateRoom");
 
-// GET запрос на создание комнаты свидания, в который в query.creator МОЖНО и НУЖНО передать имя автора, открывающего эту комнату
+// GET запрос на выдачу инфо обо всех комнатах
+router.get("/get", async (req, res) => {
+    const allMovieRooms = await MovieDateRoom.find({});
+
+    res.json(allMovieRooms);
+})
+
+// GET запрос на выдачу инфо об одной комнате
+router.get("/get/:shortId", async (req, res) => {
+    const {shortId} = req.params;
+
+    const shortIdMovieRoom = await MovieDateRoom.findOne({shortId});
+
+    res.json(shortIdMovieRoom);
+})
+
+// POST запрос на создание комнаты свидания, в который в query.creator МОЖНО и НУЖНО передать имя автора, открывающего эту комнату
 router.post("/create", async (req, res) => {
     const host = req.body.host || "default name";
 
@@ -49,7 +65,7 @@ router.post("/create", async (req, res) => {
     }, 120_000)
 })
 
-// GET запрос на создание контента очереди из фильмов
+// POST запрос на создание контента очереди из фильмов
 router.post("/fullfillquery", async (req, res) => {
     const {uuid} = req.body;
 
@@ -109,9 +125,25 @@ router.post("/fullfillquery", async (req, res) => {
     res.json(foundMovieDate);
 })
 
-// POST запрос на присоединение к существущей комнате
-router.post("/join/:shortid", async (req, res) => {
+// GET запрос на получение формы на ввод никнейма для присоединения к существующей комнате
+router.get("/join/:shortId", async (req, res) => {
+    // Здесь надо генерить формочку
+    res.render("index.html");
+})
 
+// POST запрос на присоединение к существущей комнате
+router.post("/join/:shortId", async (req, res) => {
+    const {shortId} = req.params;
+    const {username} = req.body;
+
+    if (!shortId) return res.status(400).json({status: 400, message: "No shortId was attached to request params"})
+    if (!username) return res.status(400).json({status: 400, message: "No username was attached to request body"})
+
+    const foundAndUpdatedMovieRoom = await MovieDateRoom.findOneAndUpdate({shortId}, {users: {user2: {username}}});
+
+    if (!foundAndUpdatedMovieRoom) return res.status(404).json({status: 404, message: "Not found the same shortid room"})
+
+    res.json(foundAndUpdatedMovieRoom);
 })
 
 module.exports = router;
