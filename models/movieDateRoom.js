@@ -50,6 +50,15 @@ const movieDateRoomSchema = new mongoose.Schema({
         },
         matchedMovie: String
     },
+    started: {
+        status: {
+            type: Boolean,
+            default: false
+        },
+        time: {
+            type: Number
+        }
+    },
     moviesQuery: Array
 })
 
