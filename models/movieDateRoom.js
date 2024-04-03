@@ -50,7 +50,16 @@ const movieDateRoomSchema = new mongoose.Schema({
         },
         matchedMovie: String
     },
-    createdFilmsQuery: Array
+    started: {
+        status: {
+            type: Boolean,
+            default: false
+        },
+        time: {
+            type: Number
+        }
+    },
+    moviesQuery: Array
 })
 
 module.exports = mongoose.model("MovieDateRoom", movieDateRoomSchema, "movieDateRooms");

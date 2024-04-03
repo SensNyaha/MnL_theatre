@@ -7,15 +7,33 @@ const shortId = require("shortid");
 const Movie = require("../models/movie");
 const MovieDateRoom = require("../models/movieDateRoom");
 
-// GET запрос на создание комнаты свидания, в который в query.creator МОЖНО и НУЖНО передать имя автора, открывающего эту комнату
-router.get("/create", async (req, res) => {
-    console.log(req.query.creator);
-    const creator = req.query.creator || "default name";
+const shuffleArray = require("../helpers/shuffleArray");
+
+// GET запрос на выдачу инфо обо всех комнатах
+router.get("/get", async (req, res) => {
+    const allMovieRooms = await MovieDateRoom.find({}).select("-moviesQuery");
+
+    res.json(allMovieRooms);
+})
+
+// GET запрос на выдачу инфо об одной комнате
+router.get("/get/:shortId", async (req, res) => {
+    const {shortId} = req.params;
+
+    const shortIdMovieRoom = await MovieDateRoom.findOne({shortId});
+    if (!shortIdMovieRoom) return res.status(404).json({status: 404, message: "Room with the same shortId not found"})
+
+    res.json(shortIdMovieRoom);
+})
+
+// POST запрос на создание комнаты свидания, в который в query.creator МОЖНО и НУЖНО передать имя автора, открывающего эту комнату
+router.post("/create", async (req, res) => {
+    const host = req.body.host || "default name";
 
     const movieDateRoomObj = new MovieDateRoom({
         users: {
             user1: {
-                username: creator,
+                username: host,
                 ratedFilms: {
                     likedFilms: [],
                     dislikedFilms: [],
@@ -40,22 +58,32 @@ router.get("/create", async (req, res) => {
         shortId: shortId(this.uuid)
     });
 
+
     const addedMovieDateRoom = await movieDateRoomObj.save();
 
     res.json(addedMovieDateRoom);
 
     setTimeout(async () => {
         await MovieDateRoom.findOneAndDelete({uuid: movieDateRoomObj.uuid})
-    }, 30000)
+    }, 120_000)
 })
 
-// GET запрос на создание контента очереди из фильмов для текущей комнаты
-router.get("/getquery", async (req, res) => {
+// POST запрос на создание контента очереди из фильмов
+router.post("/fullfillquery", async (req, res) => {
+    const {uuid} = req.body;
+
+    const foundMovieDateRoom = await MovieDateRoom.findOne({uuid});
+    if (!foundMovieDateRoom) return res.status(404).json({status: 404, message: "Not found this uuid room"})
+    if (foundMovieDateRoom.started.status) return res.status(400).json({status: 400, message: "Room already started. Cant make movie query for it"})
+
+    if (!uuid) return res.status(400).json({status: 400, message: "No uuid was attached with request"})
+
     const genres = req.query.genres; //[&]genres=Short,Western[&]
     const years = req.query.years; //[&]years=1910-2020[&]
     const countries = req.query.countries; //[&]countries=GB,US[&]
     const hasSeries = req.query.hasSeries; //[&]hasSeries=false[&]
     const rating = req.query.rating; //[&]rating=7-10[&]
+    const maxQuerySize = parseInt(req.query.maxQuerySize) || 200; //[&]maxQuerySize=200[&]
 
     const filterObject = {};
     // фильтр по жанрам
@@ -84,7 +112,8 @@ router.get("/getquery", async (req, res) => {
     }
 
     // фильтр по сериалам/полнометражкам
-    filterObject["main.canHaveEpisodes"] = hasSeries === "true";
+    const hasSeriesFilter = hasSeries === "true"
+    filterObject["main.canHaveEpisodes"] = hasSeriesFilter;
 
     // фильтр по рейтингу
     const ratingArray = rating?.split("-") || [];
@@ -96,6 +125,78 @@ router.get("/getquery", async (req, res) => {
     };
 
     const foundMovies = await Movie.find(filterObject);
-    res.json(foundMovies);
+
+    shuffleArray(foundMovies);
+    foundMovies.splice(maxQuerySize);
+
+    const foundMovieDate = await MovieDateRoom.findOneAndUpdate({uuid}, {
+        moviesQuery: foundMovies,
+        filters: {
+            genres: genresArray,
+            years: {
+                from: yearsArray[0],
+                to: yearsArray[1]
+            },
+            countries: countriesArray,
+            hasSeries: hasSeriesFilter,
+            rating: {
+                from: ratingArray[0],
+                to: ratingArray[1]
+            }
+        }
+    });
+    if (!foundMovieDate) {
+        return res.json({status: 404, message: "No room found with the same uuid"});
+    }
+
+    res.json(foundMovieDate);
 })
+
+// GET запрос на получение формы на ввод никнейма для присоединения к существующей комнате
+router.get("/join", async (req, res) => {
+    // Здесь надо генерить формочку
+    res.render("index.html");
+})
+
+// POST запрос на присоединение к существущей комнате
+router.post("/join/:shortId", async (req, res) => {
+    const {shortId} = req.params;
+    const {username} = req.body;
+
+    if (!shortId) return res.status(400).json({status: 400, message: "No shortId was attached to request params"})
+    if (!username) return res.status(400).json({status: 400, message: "No username was attached to request body"})
+
+    const foundMovieRoom = await MovieDateRoom.findOne({shortId});
+    if (!foundMovieRoom) return res.status(404).json({status: 404, message:"Room with the same shortId not found"})
+    if (foundMovieRoom.users.user2.username) return res.status(400).json({status: 400, message:"Room is closed for connection"})
+
+    const foundAndUpdatedMovieRoom = await MovieDateRoom.findOneAndUpdate({shortId}, {users: {user2: {username}}});
+
+    if (!foundAndUpdatedMovieRoom) return res.status(404).json({status: 404, message: "Not found the same shortid room"})
+
+    res.json(foundAndUpdatedMovieRoom);
+})
+
+// POST запрос на запуск активности комнаты
+router.post("/start/:shortId", async (req, res) => {
+    const {shortId} = req.params;
+
+    if (!shortId) return res.status(400).json({status: 400, message: "No shortId was attached with request"});
+
+    const foundMovieRoom = await MovieDateRoom.findOne({shortId});
+
+    if (!foundMovieRoom.moviesQuery || !foundMovieRoom.moviesQuery.length) return res.status(400).json({status: 400, message: "You have to fullfill movies query before you start the date"});
+    if (foundMovieRoom.started.status) return res.status(400).json({status: 400, message: "Movie date is already started"});
+
+    const foundShortIdMovieRoom = await MovieDateRoom.findOneAndUpdate({shortId}, {
+        started: {
+            status: true,
+            time: Date.now()
+        }
+    });
+    if (!foundShortIdMovieRoom) return res.status(404).json({status: 404, message: "No shortId room exists"});
+
+    res.json(foundShortIdMovieRoom);
+})
+
 module.exports = router;
