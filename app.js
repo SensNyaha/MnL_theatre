@@ -35,6 +35,42 @@ app.use('/movieDate', movieDateRouter);
 mongoose.connect("mongodb://127.0.0.1:27017/IMDB")
     .then(() => app.listen(3000, async () => {
         console.log("server started");
-        let movieID = "14273";
-        // await fetchIMDB(movieID);
+        let movieID = "43070";
+        await fetchIMDB(movieID);
+        // const stringArr = new String(fs.readFileSync("./processes/failedIDs.txt")).split("\n");
+        // for (let i = 0; i < stringArr.length; i++) {
+        //     const string = stringArr[i];
+        //
+        //     if (!string.includes("undefined")) return;
+        //
+        //     const fetchres = await fetch(`https://search.imdbot.workers.dev/?tt=tt${string.split(" ")[0]}`);
+        //     const jsonedResult = await fetchres.json();
+        //     if (jsonedResult.imdbId === "tt"+string.split(" ")[0]) {
+        //         const newMovie = new Movie({...jsonedResult});
+        //
+        //         try {
+        //             const added = await newMovie.save();
+        //             console.log(added.imdbId, added.short.name);
+        //             stringArr.splice(i, 1);
+        //             i--;
+        //         }
+        //         catch (e) {
+        //             // newResult += `${string.split(" ")[0]} ошибка при записи коллекции в БД - возможно запись этого документа была произведена ранее\n`;
+        //             console.log(`${string.split(" ")[0]} ошибка при записи коллекции в БД - возможно запись этого документа была произведена ранее`);
+        //             stringArr.splice(i, 1);
+        //             i--;
+        //         }
+        //     } else {
+        //         try {
+        //             // newResult += `${string.split(" ")[0]} возвращенный id из ответа (${jsonedResult.imdbId}) уже был ранее записан\n`;
+        //             console.log(`${string.split(" ")[0]} возвращенный id из ответа (${jsonedResult.imdbId}) уже был ранее записан`);
+        //         }
+        //         catch (e) {
+        //             // newResult += `${string.split(" ")[0]} ошибка при записи коллекции в БД [второе колено по неконсистентности ID]\n`;
+        //             console.log(`\n ${string.split(" ")[0]} ошибка при записи коллекции в БД [второе колено по неконсистентности ID]`);
+        //         }
+        //     }
+        // }
+        // console.log(stringArr.join("\r\n"));
+        // fs.writeSync("./processes/failedIDs.txt1", stringArr.join("\r\n"));
     }))

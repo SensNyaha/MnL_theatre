@@ -22,12 +22,18 @@ async function fetchIMDB(movieID) {
         const newMovie = new Movie({...jsonedResult});
 
         try {
-            const added = await newMovie.save();
-            console.log(added.imdbId, added.short.name);
+            if (jsonedResult.short["@type"] !== "Movie") {
+                console.log(addZeros(movieID), "is not a movie")
+            }
+            else {
+                const added = await newMovie.save();
+                console.log(added.imdbId, added.short.name);
+            }
+
         }
         catch (e) {
             fs.appendFileSync("./processes/failedIDs.txt", `${addZeros(movieID)} ошибка при записи коллекции в БД - возможно запись этого документа была произведена ранее [коллизия уникальных ключей]\r\n`)
-            console.log(addZeros(movieID), `\n ${addZeros(movieID)} ошибка при записи коллекции в БД - возможно запись этого документа была произведена ранее`);
+            console.log(`${addZeros(movieID)} ошибка при записи коллекции в БД - возможно запись этого документа была произведена ранее`);
         }
     } else {
         try {
@@ -36,7 +42,7 @@ async function fetchIMDB(movieID) {
         }
         catch (e) {
             fs.appendFileSync("./processes/failedIDs.txt", `${addZeros(movieID)} ошибка при записи коллекции в БД [второе колено по неконсистентности ID]\r\n`)
-            console.log(addZeros(movieID), `\n ${addZeros(movieID)} ошибка при записи коллекции в БД [второе колено по неконсистентности ID]`);
+            console.log(`${addZeros(movieID)} ошибка при записи коллекции в БД [второе колено по неконсистентности ID]`);
         }
     }
 
