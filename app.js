@@ -11,7 +11,7 @@ const indexRouter = require('./routes/index');
 const ttRouter = require("./routes/tt");
 const movieDateRouter = require("./routes/movieDate");
 
-const fetchIMDB = require('./processes/fetchIMDB');
+const {fetchIMDB, addZeros} = require('./processes/fetchIMDB');
 const Movie = require("./models/movie");
 const fs = require("fs");
 const compression = require('compression');
@@ -35,8 +35,38 @@ app.use('/movieDate', movieDateRouter);
 mongoose.connect("mongodb://127.0.0.1:27017/IMDB")
     .then(() => app.listen(3000, async () => {
         console.log("server started");
-        let movieID = "43070";
-        await fetchIMDB(movieID);
+        let movieID = "969000";
+        let nextMovieId = "" + (parseInt(movieID) + 1);
+        let nextnextMovieId = "" + (parseInt(movieID) + 2);
+        let nextnextnextMovieId = "" + (parseInt(movieID) + 3);
+        let nextnextnextnextMovieId = "" + (parseInt(movieID) + 4);
+        let nextnextnextnextnextMovieId = "" + (parseInt(movieID) + 5);
+        let nextnextnextnextnextnextMovieId = "" + (parseInt(movieID) + 6);
+        fetchIMDB(movieID);
+        fetchIMDB(nextMovieId);
+        fetchIMDB(nextnextMovieId);
+        fetchIMDB(nextnextnextMovieId);
+        fetchIMDB(nextnextnextnextMovieId);
+        fetchIMDB(nextnextnextnextnextMovieId);
+        fetchIMDB(nextnextnextnextnextnextMovieId);
+
+
+
+
+        //     const TypeArray = new Set(
+        //         'Movie',
+        //         'TVSeries',
+        //         'TVEpisode',
+        //         'MusicVideoObject',
+        //         'VideoGame'
+        //     );
+        //     for (let i = 0; i < 600000; i++) {
+        //             const elems = await Movie.find({"short.@type": "MusicVideoObject"});
+        //             if (elems) {
+        //                 Array.from(elems).forEach(e => e.imdbId)
+        //             }
+        //     }
+
         // const stringArr = new String(fs.readFileSync("./processes/failedIDs.txt")).split("\n");
         // for (let i = 0; i < stringArr.length; i++) {
         //     const string = stringArr[i];
