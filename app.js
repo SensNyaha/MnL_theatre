@@ -35,7 +35,7 @@ app.use('/movieDate', movieDateRouter);
 mongoose.connect("mongodb://127.0.0.1:27017/IMDB")
     .then(() => app.listen(3000, async () => {
         console.log("server started");
-        let movieID = "969000";
+        let movieID = "968000";
         let nextMovieId = "" + (parseInt(movieID) + 1);
         let nextnextMovieId = "" + (parseInt(movieID) + 2);
         let nextnextnextMovieId = "" + (parseInt(movieID) + 3);
